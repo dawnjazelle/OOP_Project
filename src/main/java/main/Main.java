@@ -12,7 +12,7 @@ public class Main {
                 [1] Student
                 [2] Provider
                 [3] Office Staff
-                """;);
+                """);
             char choice = scanner.next().charAt(0);
     }
 }
