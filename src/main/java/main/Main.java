@@ -14,5 +14,11 @@ public class Main {
                 [3] Office Staff
                 """);
             char choice = scanner.next().charAt(0);
+
+        switch (choice) {
+            case 1 -> {}
+        }
+
+        scanner.close();
     }
 }
