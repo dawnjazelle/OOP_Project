@@ -1,3 +1,5 @@
+package main;
+
 public abstract class Account {
 
     // status values of an account
