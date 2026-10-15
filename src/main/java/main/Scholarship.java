@@ -1,3 +1,5 @@
+package main;
+
 // A scholarship posted by a Benefactor
 public class Scholarship {
 

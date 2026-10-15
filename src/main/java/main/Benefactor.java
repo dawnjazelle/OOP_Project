@@ -1,3 +1,5 @@
+package main;
+
 import java.util.LinkedList;
 
 // A scholarship Benefactor. Keeps the page details and what a Benefactor can do.

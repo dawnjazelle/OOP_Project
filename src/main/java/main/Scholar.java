@@ -1,3 +1,5 @@
+package main;
+
 // A student who was approved for a scholarship.
 // A student can be a scholar of the same scholarship only once.
 public class Scholar {

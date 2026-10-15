@@ -1,3 +1,5 @@
+package main;
+
 // Base class of every user who signs in (Student and Benefactor)
 public abstract class UserAccount {
 

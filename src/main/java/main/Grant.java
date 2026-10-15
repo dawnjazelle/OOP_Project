@@ -1,3 +1,5 @@
+package main;
+
 // A grant that a Benefactor recorded for a scholar.
 // The system does not send or hold money. It only keeps the record.
 public class Grant {

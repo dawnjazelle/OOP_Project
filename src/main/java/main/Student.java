@@ -1,3 +1,5 @@
+package main;
+
 import java.util.LinkedList;
 
 // A student. Keeps the student info and what a student can do.

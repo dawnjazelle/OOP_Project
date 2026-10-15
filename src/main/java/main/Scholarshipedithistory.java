@@ -1,3 +1,5 @@
+package main;
+
 // One saved change to a scholarship (an edit or a renewal change).
 // It is never changed after it is saved.
 public class ScholarshipEditHistory {

@@ -1,3 +1,5 @@
+package main;
+
 // One application of a student to a scholarship.
 // Every try is its own record, so the history is kept.
 public class Application {
