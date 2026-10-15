@@ -1,5 +1,7 @@
 package main;
 
+import java.util.LinkedList;
+
 // A scholarship posted by a Benefactor
 public class Scholarship {
 
@@ -27,6 +29,7 @@ public class Scholarship {
     private String approvalStatus;
     private String createdOn;
     private boolean renewalPending;
+    private LinkedList<ScholarshipEditHistory> editHistory;
 
     // A new scholarship is Open, Pending and in cycle 1
     public Scholarship(int scholarshipId, int benefactorId, String title, String academicYear,
@@ -47,6 +50,7 @@ public class Scholarship {
         this.status = OPEN;
         this.approvalStatus = PENDING;
         this.renewalPending = false;
+        this.editHistory = new LinkedList<ScholarshipEditHistory>();
     }
 
     // True if students can see it (approved and open)
@@ -138,6 +142,18 @@ public class Scholarship {
         }
         status = CLOSED;
         return true;
+    }
+
+    // Adds one edit record to the history of this scholarship
+    public void addEdit(ScholarshipEditHistory edit) {
+        if (edit != null) {
+            editHistory.add(edit);
+        }
+    }
+
+    // The edit records of this scholarship
+    public LinkedList<ScholarshipEditHistory> getEditHistory() {
+        return editHistory;
     }
 
     // Text for printing a scholarship
