@@ -46,10 +46,14 @@ public class Scholar {
         return false;
     }
 
-    // Sets a new status. Gives false if the status is not one of the six.
+    // Sets a new status. Gives false if the status is not one of the six,
+    // or if the scholarship already ended (an ended scholarship stays ended).
     // When the scholarship ends for the student, the end date is set to today.
     public boolean setStatus(String newStatus, String today) {
         if (newStatus == null) {
+            return false;
+        }
+        if (!blocksApplying()) {
             return false;
         }
         boolean validStatus = false;

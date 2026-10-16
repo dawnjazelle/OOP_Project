@@ -246,6 +246,10 @@ public class Benefactor extends UserAccount {
         if (scholar == null) {
             return false;
         }
+        // The scholar must still hold the scholarship
+        if (!scholar.blocksApplying()) {
+            return false;
+        }
         if (probation && isBlank(comment)) {
             return false;
         }
@@ -281,7 +285,10 @@ public class Benefactor extends UserAccount {
         }
         String today = db.getToday();
         application.decide(Application.REJECTED, text, today);
-        scholar.setStatus(Scholar.NOT_RENEWED, today);
+        // A scholar who already ended stays as is
+        if (scholar.blocksApplying()) {
+            scholar.setStatus(Scholar.NOT_RENEWED, today);
+        }
         return true;
     }
 
@@ -289,6 +296,7 @@ public class Benefactor extends UserAccount {
 
     // Sets Active, Probation, Suspended or Completed.
     // Lapsed and Not renewed are set by the system.
+    // Gives false if the scholar's scholarship already ended.
     public boolean setScholarStatus(Scholar scholar, String status, String today) {
         if (scholar == null || status == null) {
             return false;
@@ -309,8 +317,7 @@ public class Benefactor extends UserAccount {
         if (!allowed) {
             return false;
         }
-        scholar.setStatus(status, today);
-        return true;
+        return scholar.setStatus(status, today);
     }
 
     // Records a grant sent outside the system. It starts as Sent. Gives null if not valid.

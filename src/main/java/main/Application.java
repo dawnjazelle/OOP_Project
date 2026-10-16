@@ -55,6 +55,7 @@ public class Application {
 
     // Saves the Benefactor's decision. Works only on a pending application.
     // Decisions: Returned, Approved, Rejected or Waitlisted
+    // Returned works only on a Submitted application.
     public boolean decide(String newStatus, String comment, String today) {
         if (!isPending() || newStatus == null) {
             return false;
@@ -73,6 +74,11 @@ public class Application {
             validDecision = true;
         }
         if (!validDecision) {
+            return false;
+        }
+
+        // Only a Submitted application can be returned
+        if (newStatus.equals(RETURNED) && !status.equals(SUBMITTED)) {
             return false;
         }
 
