@@ -99,19 +99,21 @@ public class Student extends UserAccount {
             return "You already have a pending application to this scholarship.";
         }
 
-        // 4. A student who holds a scholarship cannot apply to another one.
-        //    The only exception is the renewed scholarship the student already holds.
+        // 4. A student who holds a scholarship cannot apply for any scholarship.
+        //    The only exception is the RENEWED version (cycle 2 or more)
+        //    of the scholarship the student already holds.
+        boolean isRenewed = (scholarship.getCycleNo() >= 2);
         Scholar holding = db.findBlockingScholar(this);
         boolean holdsAScholarship = (holding != null);
         if (holdsAScholarship) {
-            boolean isAnotherScholarship = (holding.getScholarshipId() != scholarship.getScholarshipId());
-            if (isAnotherScholarship) {
+            boolean isTheSameScholarship = (holding.getScholarshipId() == scholarship.getScholarshipId());
+            boolean isRenewalOfTheHeldOne = isTheSameScholarship && isRenewed;
+            if (isRenewalOfTheHeldOne == false) {
                 return "You already hold a scholarship, so you cannot apply to another one.";
             }
         }
 
         // 5. A renewed scholarship (cycle 2 or more) accepts only its own scholars.
-        boolean isRenewed = (scholarship.getCycleNo() >= 2);
         if (isRenewed) {
             Scholar mine = db.findScholar(this, scholarship);
 

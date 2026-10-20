@@ -1,28 +1,30 @@
 package main;
 
-// A grant that a Benefactor recorded for a scholar.
-// The system does not send or hold money. It only keeps the record.
+// Grant is a grant that a Benefactor recorded for a scholar.
+// The system NEVER sends or holds money. The Benefactor sends the money outside the system
+// (GCash, bank transfer or cash), and the system only keeps this record.
+// A recorded grant is never edited or deleted. A wrong one is only voided,
+// and the Benefactor records a new grant to replace it if needed.
 public class Grant {
 
-    // Status values
-    public static final String SENT = "Sent";
-    public static final String CONFIRMED = "Confirmed";
-    public static final String DISPUTED = "Disputed";
-    public static final String VOIDED = "Voided";
+    // ---------- Attributes ----------
+    // They are private, so other classes must use the methods and getters below.
 
-    private int grantId;
-    private int scholarId;
-    private int benefactorId;
-    private double amount;
-    private String method;
-    private String dateSent;
-    private String referenceNo;
-    private String status;
-    private String confirmedOn;
-    private String voidReason;
+    private int grantId;          // unique ID of this grant record
+    private int scholarId;        // ID of the scholar who receives the grant
+    private int benefactorId;     // ID of the Benefactor who recorded it
+    private double amount;        // how much was sent
+    private String method;        // "GCash", "Bank transfer" or "Cash"
+    private String dateSent;      // date the Benefactor sent it, yyyy-MM-dd
+    private String referenceNo;   // reference number from the e-wallet or bank (can be empty for cash)
+    private String status;        // "Sent", "Confirmed", "Disputed" or "Voided"
+    private String confirmedOn;   // date the scholar confirmed receiving it (empty until then)
 
-    // method is GCash, Bank transfer or Cash
-    // A new grant starts as Sent
+
+    // ---------- Constructor ----------
+
+    // Purpose: save a new grant record.
+    // A new grant always starts as Sent, and it is not confirmed yet.
     public Grant(int grantId, int scholarId, int benefactorId, double amount,
                  String method, String dateSent, String referenceNo) {
         this.grantId = grantId;
@@ -32,50 +34,82 @@ public class Grant {
         this.method = method;
         this.dateSent = dateSent;
         this.referenceNo = referenceNo;
-        this.status = SENT;
-        this.confirmedOn = "None";
-        this.voidReason = "";
+
+        this.status = "Sent";
+        this.confirmedOn = "";
     }
 
-    // The scholar says the grant was received. Works only on a Sent grant.
+
+    // ---------- Status rules ----------
+    // The status changes only through the methods below, and each method
+    // changes it only when the current status allows it.
+
+    // Purpose: the scholar confirms that the grant was received.
+    // The status becomes Confirmed, and the confirmation date (today) is saved.
+    // Returns true if it was confirmed, and false if the grant is not "Sent".
     public boolean confirm(String today) {
-        if (!status.equals(SENT)) {
+        boolean isSent = status.equals("Sent");
+        if (isSent == false) {
             return false;
         }
-        status = CONFIRMED;
+
+        status = "Confirmed";
         confirmedOn = today;
         return true;
     }
 
-    // The scholar says the grant was not received. Works only on a Sent grant.
+    // Purpose: the scholar says the grant was not received or is wrong.
+    // The status becomes Disputed.
+    // Returns true if it was disputed, and false if the grant is not "Sent".
     public boolean dispute() {
-        if (!status.equals(SENT)) {
+        boolean isSent = status.equals("Sent");
+        if (isSent == false) {
             return false;
         }
-        status = DISPUTED;
+
+        status = "Disputed";
         return true;
     }
 
-    // The Benefactor voids the grant with a reason. A grant is never edited or deleted.
-    public boolean voidWith(String reason) {
-        if (status.equals(VOIDED)) {
+    // Purpose: the Benefactor voids a wrong grant record.
+    // A grant is never edited or deleted, it is only voided.
+    // Returns true if it was voided, and false if it is already Voided.
+    public boolean markVoided() {
+        boolean isVoided = status.equals("Voided");
+        if (isVoided) {
             return false;
         }
-        if (reason == null || reason.trim().equals("")) {
-            return false;
-        }
-        status = VOIDED;
-        voidReason = reason.trim();
+
+        status = "Voided";
         return true;
     }
 
-    // Text for printing a grant
-    @Override
+
+    // ---------- Text ----------
+
+    // Purpose: give a short text of the grant for lists and printing.
+    // Example: "[1] Scholar 1 - 1000.00 by GCash (ref REF123) - Sent on 2026-10-20"
+    // toString() replaces (overrides) the toString() that every Java object has.
     public String toString() {
-        return grantId + " | " + amount + " | " + method + " | " + status + " | sent " + dateSent;
+        // String.format works like printf: %.2f means a number with 2 decimals.
+        String amountText = String.format("%.2f", amount);
+
+        // A cash grant may have no reference number.
+        String referenceText = "no reference";
+        boolean hasReference = (referenceNo.trim().equals("") == false);
+        if (hasReference) {
+            referenceText = "ref " + referenceNo;
+        }
+
+        return "[" + grantId + "] Scholar " + scholarId + " - " + amountText + " by " + method
+                + " (" + referenceText + ") - " + status + " on " + dateSent;
     }
 
-    // Getters
+
+    // ---------- Getters ----------
+    // They let other classes read the private attributes.
+    // There are no setters, because a grant is never edited.
+
     public int getGrantId() {
         return grantId;
     }
@@ -110,9 +144,5 @@ public class Grant {
 
     public String getConfirmedOn() {
         return confirmedOn;
-    }
-
-    public String getVoidReason() {
-        return voidReason;
     }
 }

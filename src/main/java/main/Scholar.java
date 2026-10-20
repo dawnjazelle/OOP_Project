@@ -1,28 +1,29 @@
 package main;
 
-// A student who was approved for a scholarship.
-// A student can be a scholar of the same scholarship only once.
+// Scholar is a student who was approved for a scholarship.
+// It is created when a Benefactor approves an application.
+// Each scholarship has its own scholars, and a student can be a scholar
+// of the same scholarship only once.
+// The status of the scholar decides if the student can apply to another scholarship.
 public class Scholar {
 
-    // Status values
-    public static final String ACTIVE = "Active";
-    public static final String PROBATION = "Probation";
-    public static final String SUSPENDED = "Suspended";
-    public static final String LAPSED = "Lapsed";
-    public static final String NOT_RENEWED = "Not renewed";
-    public static final String COMPLETED = "Completed";
+    // ---------- Attributes ----------
+    // They are private, so other classes must use the methods and getters below.
 
-    private int scholarId;
-    private int studentId;
-    private int scholarshipId;
-    private int applicationId;
-    private String status;
-    private String startDate;
-    private String endDate;
-    private int renewalCount;
+    private int scholarId;        // unique ID of this scholar record
+    private int studentId;        // ID of the student who holds the scholarship
+    private int scholarshipId;    // ID of the scholarship that is held
+    private int applicationId;    // ID of the approved application this record came from
+    private String status;        // Active, Probation, Suspended, Lapsed, Not renewed or Completed
+    private String startDate;     // when the student started as a scholar, yyyy-MM-dd
+    private String endDate;       // when the scholarship ended for the student (empty while it goes on)
+    private int renewalCount;     // how many times the scholar's renewal was approved
 
-    // applicationId is the approved application this record came from
-    // A new scholar starts Active with no end date
+
+    // ---------- Constructor ----------
+
+    // Purpose: save a new scholar record.
+    // A new scholar always starts as Active, with no end date and 0 renewals.
     public Scholar(int scholarId, int studentId, int scholarshipId,
                    int applicationId, String startDate) {
         this.scholarId = scholarId;
@@ -30,96 +31,106 @@ public class Scholar {
         this.scholarshipId = scholarshipId;
         this.applicationId = applicationId;
         this.startDate = startDate;
-        this.status = ACTIVE;
-        this.endDate = "None";
+
+        this.status = "Active";
+        this.endDate = "";
         this.renewalCount = 0;
     }
 
-    // True if the student still holds the scholarship (Active or Probation)
+
+    // ---------- Status rules ----------
+
+    // Purpose: tell if the student still holds the scholarship.
+    // Returns true while the status is Active or Probation.
+    // In that case the student cannot apply to another scholarship.
     public boolean blocksApplying() {
-        if (status.equals(ACTIVE)) {
-            return true;
-        }
-        if (status.equals(PROBATION)) {
-            return true;
-        }
-        return false;
+        boolean isActive = status.equals("Active");
+        boolean isOnProbation = status.equals("Probation");
+        return isActive || isOnProbation;
     }
 
-    // Sets a new status. Gives false if the status is not one of the six,
-    // or if the scholarship already ended (an ended scholarship stays ended).
-    // When the scholarship ends for the student, the end date is set to today.
+    // Purpose: change the status of the scholar.
+    // newStatus is Active, Probation, Suspended, Lapsed, Not renewed or Completed.
+    // It works only while the scholar still holds the scholarship (Active or Probation),
+    // because a scholarship that has ended stays ended.
+    // When the new status ends the scholarship (Suspended, Lapsed, Not renewed or Completed),
+    // the end date is set to today, and the student is free to apply again.
+    // Returns true if the status was changed, and false if:
+    // - newStatus is not one of the six statuses, or
+    // - the scholarship of the student already ended.
     public boolean setStatus(String newStatus, String today) {
-        if (newStatus == null) {
-            return false;
-        }
-        if (!blocksApplying()) {
-            return false;
-        }
-        boolean validStatus = false;
-        if (newStatus.equals(ACTIVE)) {
-            validStatus = true;
-        }
-        if (newStatus.equals(PROBATION)) {
-            validStatus = true;
-        }
-        if (newStatus.equals(SUSPENDED)) {
-            validStatus = true;
-        }
-        if (newStatus.equals(LAPSED)) {
-            validStatus = true;
-        }
-        if (newStatus.equals(NOT_RENEWED)) {
-            validStatus = true;
-        }
-        if (newStatus.equals(COMPLETED)) {
-            validStatus = true;
-        }
-        if (!validStatus) {
+        // 1. Only the six known statuses are allowed.
+        boolean isKnownStatus = newStatus.equals("Active") || newStatus.equals("Probation")
+                || newStatus.equals("Suspended") || newStatus.equals("Lapsed")
+                || newStatus.equals("Not renewed") || newStatus.equals("Completed");
+        if (isKnownStatus == false) {
             return false;
         }
 
-        this.status = newStatus;
-        if (blocksApplying()) {
-            this.endDate = "None";
-        } else {
-            this.endDate = today;
+        // 2. A scholarship that already ended cannot change again.
+        if (blocksApplying() == false) {
+            return false;
+        }
+
+        // 3. Save the new status.
+        status = newStatus;
+
+        // 4. If the new status ends the scholarship, save the end date.
+        boolean scholarshipEnded = newStatus.equals("Suspended") || newStatus.equals("Lapsed")
+                || newStatus.equals("Not renewed") || newStatus.equals("Completed");
+        if (scholarshipEnded) {
+            endDate = today;
         }
         return true;
     }
 
-    // Adds 1 when a renewal is approved
+    // Purpose: add 1 to the renewal count.
+    // It is called when a renewal application of this scholar is approved.
     public void addRenewal() {
         renewalCount = renewalCount + 1;
     }
 
-    // The scholar did not apply by the deadline of the renewed scholarship
+    // Purpose: mark the scholar as Lapsed.
+    // This happens when the scholar did not apply by the deadline of the renewed scholarship.
+    // The end date is saved too.
+    // Returns true if it was done, and false if the scholar is not Active or Probation.
     public boolean markLapsed(String today) {
-        if (!blocksApplying()) {
-            return false;
-        }
-        status = LAPSED;
-        endDate = today;
-        return true;
+        return setStatus("Lapsed", today);
     }
 
-    // The scholarship was closed or the scholar graduated
+    // Purpose: mark the scholar as Completed, with the end date set to today.
+    // It is used when the scholarship is closed or when the scholar graduates.
+    // Returns true if it was done, and false if the scholar is not Active or Probation.
     public boolean complete(String today) {
-        if (!blocksApplying()) {
-            return false;
-        }
-        status = COMPLETED;
-        endDate = today;
-        return true;
+        return setStatus("Completed", today);
     }
 
-    // Text for printing a scholar
-    @Override
+
+    // ---------- Text ----------
+
+    // Purpose: give a short text of the scholar for lists and printing.
+    // Example while it goes on: "[1] Student 2, Scholarship 1 - Active, 0 renewals (since 2026-10-20)"
+    // Example after it ended:   "[1] Student 2, Scholarship 1 - Completed, 1 renewals (2026-10-20 to 2027-03-31)"
+    // toString() replaces (overrides) the toString() that every Java object has.
     public String toString() {
-        return scholarId + " | student " + studentId + " | " + status + " | renewals " + renewalCount;
+        String text = "[" + scholarId + "] Student " + studentId + ", Scholarship " + scholarshipId
+                + " - " + status + ", " + renewalCount + " renewals ";
+
+        boolean hasEnded = (endDate.equals("") == false);
+        if (hasEnded) {
+            text = text + "(" + startDate + " to " + endDate + ")";
+        } else {
+            text = text + "(since " + startDate + ")";
+        }
+        return text;
     }
 
-    // Getters
+
+    // ---------- Getters ----------
+    // They let other classes read the private attributes.
+    // There are no setters, because the status, the end date and the renewal count
+    // change only through the methods above.
+
     public int getScholarId() {
         return scholarId;
     }

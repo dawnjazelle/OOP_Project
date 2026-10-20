@@ -1,17 +1,27 @@
 package main;
 
-// One saved change to a scholarship (an edit or a renewal change).
-// It is never changed after it is saved.
+// ScholarshipEditHistory is ONE saved change to a scholarship.
+// It is created when a Benefactor edits or renews a scholarship.
+// It keeps what was changed, the old value, the new value and when,
+// so the history of every scholarship can be read later.
+// Each record belongs to one Scholarship and is kept in that scholarship's editHistory array.
+// A record is never changed after it is saved, so it has getters but no setters.
 public class ScholarshipEditHistory {
 
-    private int editId;
-    private int scholarshipId;
-    private String fieldName;
-    private String oldValue;
-    private String newValue;
-    private String editedOn;
+    // ---------- Attributes ----------
+    // They are private, so other classes must use the getters below.
 
-    // fieldName is the field that changed, for example deadline
+    private int editId;           // unique ID of this change
+    private int scholarshipId;    // ID of the scholarship that was edited
+    private String fieldName;     // which field was changed, for example "deadline"
+    private String oldValue;      // the value before the change
+    private String newValue;      // the value after the change
+    private String editedOn;      // date and time of the change
+
+
+    // ---------- Constructor ----------
+
+    // Purpose: fill in all the details of one change.
     public ScholarshipEditHistory(int editId, int scholarshipId, String fieldName,
                                   String oldValue, String newValue, String editedOn) {
         this.editId = editId;
@@ -22,13 +32,20 @@ public class ScholarshipEditHistory {
         this.editedOn = editedOn;
     }
 
-    // Text for printing an edit
-    @Override
+
+    // ---------- Text ----------
+
+    // Purpose: give a short text of the change for lists and printing.
+    // Example: "2026-10-20 - deadline: 2026-12-31 -> 2027-01-15"
+    // toString() replaces (overrides) the toString() that every Java object has.
     public String toString() {
-        return editId + " | " + fieldName + ": " + oldValue + " -> " + newValue + " | " + editedOn;
+        return editedOn + " - " + fieldName + ": " + oldValue + " -> " + newValue;
     }
 
-    // Getters
+
+    // ---------- Getters ----------
+    // They let other classes read the private attributes.
+
     public int getEditId() {
         return editId;
     }
