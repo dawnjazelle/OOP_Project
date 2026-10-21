@@ -330,7 +330,8 @@ public class Benefactor extends UserAccount {
     // It uses one slot, creates the scholar record as Active,
     // and withdraws the other pending applications of the student.
     // Returns the ID of the new scholar record, or 0 if the application is not pending,
-    // the student is already a scholar, or no slot is left.
+    // the student already holds a scholarship or was a scholar of this scholarship before,
+    // no slot is left, or there is no room to save the scholar record.
     public int approveApplication(DataStore db, Application application) {
         // 1. The application must still be pending.
         boolean isPending = application.isPending();
@@ -350,10 +351,16 @@ public class Benefactor extends UserAccount {
             return 0;
         }
 
-        // 3. A student who is already a scholar cannot be approved again.
+        // 3. A student who already holds a scholarship cannot be approved for another one.
+        //    A student can also be a scholar of the same scholarship only once.
         Scholar holding = db.findBlockingScholar(student);
         boolean alreadyScholar = (holding != null);
         if (alreadyScholar) {
+            return 0;
+        }
+        Scholar earlierRecord = db.findScholar(student, scholarship);
+        boolean wasScholarHere = (earlierRecord != null);
+        if (wasScholarHere) {
             return 0;
         }
 
@@ -365,14 +372,16 @@ public class Benefactor extends UserAccount {
             return 0;
         }
 
-        // 5. Mark the application as Approved.
-        boolean approved = application.decide("Approved", "", db.getToday());
-        if (approved == false) {
+        // 5. The DataStore creates the scholar record (status Active).
+        //    We do this first, so if there is no room we stop before changing the application.
+        int scholarId = db.createScholar(application);
+        if (scholarId == 0) {
             return 0;
         }
 
-        // 6. The DataStore creates the scholar record (status Active).
-        int scholarId = db.createScholar(application);
+        // 6. Mark the application as Approved.
+        //    This cannot fail here, because we already checked that it is pending.
+        application.decide("Approved", "", db.getToday());
 
         // 7. Withdraw the other pending applications of this student.
         Application[] allOfStudent = db.applicationsOf(student);
