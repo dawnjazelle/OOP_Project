@@ -11,7 +11,7 @@ import java.util.Scanner;
 //
 // PART 1 of 3: start screen, sign-in and the Student screens.
 // PART 2 of 3: the Benefactor screens.
-// PART 3 will add the Office screens. Until then, showOfficeMenu below is a placeholder.
+// PART 3 of 3: the Office screens. With this part, the class is complete.
 public class ConsoleMenu {
 
     // ---------- Attributes ----------
@@ -1858,13 +1858,604 @@ public class ConsoleMenu {
         }
     }
 
-    // ---------- Placeholder for part 3 ----------
+    // ---------- Office screens ----------
+    // The office has no class and no records of its own. It works through the methods of
+    // DataStore, UserAccount and Scholarship. In the records it can only read, never decide.
 
-    // Purpose: show the menu of the office after the admin sign-in.
-    // PLACEHOLDER: part 3 replaces this with the real Office screens.
+    // Purpose: show the menu of the office after the admin sign-in, until the office signs out.
+    // 1 Manage accounts, 2 Review scholarship posts, 3 View all records, 4 Summary.
+    // Choice 5 changes the date of the system, so deadlines and the lapsed check can be tested.
     private void showOfficeMenu() {
-        printHeader("OFFICE MENU");
-        System.out.println("The Office screens come in part 3.");
+        boolean running = true;
+        while (running) {
+            printHeader("OFFICE MENU");
+            System.out.println("1. Manage accounts");
+            System.out.println("2. Review scholarship posts");
+            System.out.println("3. View all records (read only)");
+            System.out.println("4. Summary");
+            System.out.println("5. Change the date of the system (to test deadlines)");
+            System.out.println("0. Sign out");
+            System.out.println("Date of the system: " + db.getToday());
+            int choice = -1;
+            while (choice < 0 || choice > 5) {
+                System.out.print("Choose: ");
+                try {
+                    choice = Integer.parseInt(scanner.nextLine().trim());
+                } catch (NumberFormatException e) {
+                    choice = -1;
+                }
+                boolean choiceOutOfRange = (choice < 0 || choice > 5);
+                if (choiceOutOfRange) {
+                    System.out.println("Please type a number from " + 0 + " to " + 5 + ".");
+                }
+            }
+
+            if (choice == 0) {
+                running = false;
+            }
+            if (choice == 1) {
+                manageAccounts();
+            }
+            if (choice == 2) {
+                reviewScholarshipPosts();
+            }
+            if (choice == 3) {
+                viewAllRecords();
+            }
+            if (choice == 4) {
+                showOfficeSummary();
+            }
+
+            if (choice == 5) {
+                System.out.print("New date (yyyy-MM-dd): ");
+                String newDate = scanner.nextLine().trim();
+
+                // The date must look like yyyy-MM-dd with a real month and a day from 1 to 31.
+                boolean dateIsGood = false;
+                if (newDate.length() == 10) {
+                    boolean dashAfterYear = (newDate.charAt(4) == '-');
+                    boolean dashAfterMonth = (newDate.charAt(7) == '-');
+                    if (dashAfterYear && dashAfterMonth) {
+                        int year = 0;
+                        int month = 0;
+                        int day = 0;
+                        boolean numbersAreGood = true;
+                        try {
+                            year = Integer.parseInt(newDate.substring(0, 4));
+                            month = Integer.parseInt(newDate.substring(5, 7));
+                            day = Integer.parseInt(newDate.substring(8, 10));
+                        } catch (NumberFormatException e) {
+                            numbersAreGood = false;
+                        }
+                        boolean monthIsGood = (month >= 1) && (month <= 12);
+                        boolean dayIsGood = (day >= 1) && (day <= 31);
+                        boolean yearIsGood = (year >= 2000);
+                        dateIsGood = numbersAreGood && monthIsGood && dayIsGood && yearIsGood;
+                    }
+                }
+
+                if (dateIsGood) {
+                    db.setToday(newDate);
+                    System.out.println("The date of the system is now " + db.getToday() + ".");
+                } else {
+                    System.out.println("The date was not changed. Write it as yyyy-MM-dd, for example 2026-12-31.");
+                }
+            }
+        }
+    }
+
+    // Purpose: let the office create student and Benefactor accounts, find an account,
+    // reset a password, and disable or reactivate an account.
+    // There is no self-registration, so every account is created here with a temporary password.
+    // A disabled account cannot sign in, and its records stay in the system.
+    // DataStore and UserAccount check the values and the rules.
+    private void manageAccounts() {
+        boolean running = true;
+        while (running) {
+            printHeader("MANAGE ACCOUNTS");
+            System.out.println("1. Create a student account");
+            System.out.println("2. Create a Benefactor account");
+            System.out.println("3. Find an account");
+            System.out.println("4. Reset a password");
+            System.out.println("5. Disable an account");
+            System.out.println("6. Reactivate an account");
+            System.out.println("0. Back");
+            int action = -1;
+            while (action < 0 || action > 6) {
+                System.out.print("Choose: ");
+                try {
+                    action = Integer.parseInt(scanner.nextLine().trim());
+                } catch (NumberFormatException e) {
+                    action = -1;
+                }
+                boolean actionOutOfRange = (action < 0 || action > 6);
+                if (actionOutOfRange) {
+                    System.out.println("Please type a number from " + 0 + " to " + 6 + ".");
+                }
+            }
+
+            if (action == 0) {
+                running = false;
+            }
+
+            if (action == 1) {
+                System.out.println("Leave the middle name empty if the student has none.");
+                System.out.print("Username: ");
+                String username = scanner.nextLine().trim();
+                System.out.print("Temporary password (at least 4 characters): ");
+                String tempPassword = scanner.nextLine().trim();
+                System.out.print("Student number: ");
+                String studentNumber = scanner.nextLine().trim();
+                System.out.print("Last name: ");
+                String lname = scanner.nextLine().trim();
+                System.out.print("First name: ");
+                String fname = scanner.nextLine().trim();
+                System.out.print("Middle name: ");
+                String mname = scanner.nextLine().trim();
+                System.out.print("Email: ");
+                String email = scanner.nextLine().trim();
+                System.out.print("Contact number: ");
+                String contactNumber = scanner.nextLine().trim();
+                System.out.print("Course: ");
+                String course = scanner.nextLine().trim();
+
+                int newId = db.createStudent(username, tempPassword, studentNumber, lname, fname,
+                        mname, email, contactNumber, course);
+                if (newId == 0) {
+                    System.out.println("The account was not created. Every value except the middle name is required, the password needs at least 4 characters, and the username and the student number must not be used already.");
+                } else {
+                    System.out.println("The student account was created. The student ID is " + newId + ".");
+                }
+            }
+
+            if (action == 2) {
+                System.out.println("Leave the description empty if there is none.");
+                System.out.print("Username: ");
+                String username = scanner.nextLine().trim();
+                System.out.print("Temporary password (at least 4 characters): ");
+                String tempPassword = scanner.nextLine().trim();
+                System.out.print("Name of the organization: ");
+                String benefactorName = scanner.nextLine().trim();
+
+                String[] categories = {"government", "private company", "foundation", "alumni", "LGU"};
+                System.out.println("Category:");
+                for (int i = 0; i < categories.length; i++) {
+                    System.out.println((i + 1) + ". " + categories[i]);
+                }
+                int categoryPick = -1;
+                while (categoryPick < 1 || categoryPick > categories.length) {
+                    System.out.print("Choose: ");
+                    try {
+                        categoryPick = Integer.parseInt(scanner.nextLine().trim());
+                    } catch (NumberFormatException e) {
+                        categoryPick = -1;
+                    }
+                    boolean categoryPickOutOfRange = (categoryPick < 1 || categoryPick > categories.length);
+                    if (categoryPickOutOfRange) {
+                        System.out.println("Please type a number from " + 1 + " to " + categories.length + ".");
+                    }
+                }
+
+                System.out.print("Description: ");
+                String description = scanner.nextLine().trim();
+                System.out.print("Email: ");
+                String email = scanner.nextLine().trim();
+                System.out.print("Contact number: ");
+                String contactNumber = scanner.nextLine().trim();
+                System.out.print("Address: ");
+                String address = scanner.nextLine().trim();
+
+                int newId = db.createBenefactor(username, tempPassword, benefactorName,
+                        categories[categoryPick - 1], description, email, contactNumber, address);
+                if (newId == 0) {
+                    System.out.println("The account was not created. Every value except the description is required, the password needs at least 4 characters, and the username must not be used already.");
+                } else {
+                    System.out.println("The Benefactor account was created. The Benefactor ID is " + newId + ".");
+                }
+            }
+
+            // Finding, resetting, disabling and reactivating all work on one account.
+            boolean needsAccount = (action >= 3) && (action <= 6);
+            if (needsAccount) {
+                System.out.print("Username of the account: ");
+                String findUsername = scanner.nextLine().trim();
+                UserAccount account = db.findAccountByUsername(findUsername);
+                boolean accountExists = (account != null);
+
+                if (accountExists == false) {
+                    System.out.println("No account has this username.");
+                } else {
+                    if (action == 3) {
+                        System.out.println("Username:   " + account.getUsername());
+                        System.out.println("Role:       " + account.getRole());
+                        System.out.println("Status:     " + account.getStatus());
+                        System.out.println("Created on: " + account.getCreatedOn());
+                        System.out.println("Last login: " + account.getLastLogin());
+
+                        // The account ID is the same number as the student ID and the Benefactor ID.
+                        Student student = db.findStudentById(account.getAccountId());
+                        if (student != null) {
+                            System.out.println("Student:    " + student.toString());
+                            System.out.println("Email:      " + student.getEmail() + ", contact number " + student.getContactNumber());
+                        }
+                        Benefactor owner = db.findBenefactorById(account.getAccountId());
+                        if (owner != null) {
+                            System.out.println("Benefactor: " + owner.toString());
+                            System.out.println("Email:      " + owner.getEmail() + ", contact number " + owner.getContactNumber());
+                        }
+                    }
+
+                    if (action == 4) {
+                        System.out.print("New temporary password (at least 4 characters): ");
+                        String newPassword = scanner.nextLine().trim();
+                        boolean wasReset = account.resetPassword(newPassword);
+                        if (wasReset) {
+                            System.out.println("The password was reset. Give the new temporary password to the user.");
+                        } else {
+                            System.out.println("The password was not reset. It needs at least 4 characters.");
+                        }
+                    }
+
+                    if (action == 5) {
+                        boolean isDisabled = (account.isActive() == false);
+                        if (isDisabled) {
+                            System.out.println("This account is disabled already.");
+                        } else {
+                            account.disable();
+                            System.out.println("The account was disabled. Its records stay in the system.");
+                        }
+                    }
+
+                    if (action == 6) {
+                        boolean isActive = account.isActive();
+                        if (isActive) {
+                            System.out.println("This account is active already.");
+                        } else {
+                            account.reactivate();
+                            System.out.println("The account was reactivated.");
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Purpose: list the scholarship posts that wait for the office, and approve or reject each one.
+    // A renewed scholarship waits here too, and its cycle number goes up when it is approved.
+    // A scholarship is visible to students only when it is approved and open.
+    // The Scholarship class checks that the post is still Pending.
+    private void reviewScholarshipPosts() {
+        boolean running = true;
+        while (running) {
+            printHeader("SCHOLARSHIP POSTS WAITING FOR APPROVAL");
+
+            Scholarship[] pending = db.pendingScholarships();
+            if (pending.length == 0) {
+                System.out.println("No scholarship post is waiting.");
+                running = false;
+            } else {
+                for (int i = 0; i < pending.length; i++) {
+                    Scholarship s = pending[i];
+                    Benefactor owner = db.findBenefactorById(s.getBenefactorId());
+                    String ownerText = "(Benefactor not found)";
+                    if (owner != null) {
+                        ownerText = owner.toString();
+                    }
+
+                    String kind = "New post";
+                    if (s.isRenewalPending()) {
+                        kind = "Renewal of cycle " + s.getCycleNo();
+                    }
+
+                    System.out.println((i + 1) + ". " + s.getTitle() + " - " + ownerText);
+                    System.out.println("   " + kind + ", " + s.getAcademicYear() + ", deadline " + s.getDeadline()
+                            + ", slots " + s.getSlots() + ", grant amount " + String.format("%.2f", s.getGrantAmount()));
+                    System.out.println("   Description:   " + s.getDescription());
+                    System.out.println("   Qualification: " + s.getQualification());
+                    System.out.println("   Requirement:   " + s.getRequirement());
+                }
+
+                System.out.println();
+                int pick = -1;
+                while (pick < 0 || pick > pending.length) {
+                    System.out.print("Post number to decide (0 = back): ");
+                    try {
+                        pick = Integer.parseInt(scanner.nextLine().trim());
+                    } catch (NumberFormatException e) {
+                        pick = -1;
+                    }
+                    boolean pickOutOfRange = (pick < 0 || pick > pending.length);
+                    if (pickOutOfRange) {
+                        System.out.println("Please type a number from " + 0 + " to " + pending.length + ".");
+                    }
+                }
+                if (pick == 0) {
+                    running = false;
+                } else {
+                    Scholarship chosen = pending[pick - 1];
+                    System.out.println("1. Approve");
+                    System.out.println("2. Reject (tell the Benefactor the reason by official email, outside the system)");
+                    System.out.println("0. Cancel");
+                    int decision = -1;
+                    while (decision < 0 || decision > 2) {
+                        System.out.print("Choose: ");
+                        try {
+                            decision = Integer.parseInt(scanner.nextLine().trim());
+                        } catch (NumberFormatException e) {
+                            decision = -1;
+                        }
+                        boolean decisionOutOfRange = (decision < 0 || decision > 2);
+                        if (decisionOutOfRange) {
+                            System.out.println("Please type a number from " + 0 + " to " + 2 + ".");
+                        }
+                    }
+
+                    if (decision == 1) {
+                        boolean approved = chosen.approve();
+                        if (approved) {
+                            System.out.println("The post was approved. It is visible to students now.");
+                        } else {
+                            System.out.println("The post could not be approved. It is not Pending.");
+                        }
+                    }
+                    if (decision == 2) {
+                        boolean rejected = chosen.reject();
+                        if (rejected) {
+                            System.out.println("The post was rejected. The Benefactor can edit it and send it again.");
+                        } else {
+                            System.out.println("The post could not be rejected. It is not Pending.");
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Purpose: show all the applications, scholars or grants of the system, read only.
+    // The office can filter them by Benefactor, scholarship, student and status.
+    // A filter is skipped when the text is empty or 0 (Any) is chosen. The Benefactor and the
+    // student are found by their username. This screen never changes a record.
+    private void viewAllRecords() {
+        boolean running = true;
+        while (running) {
+            printHeader("ALL RECORDS (READ ONLY)");
+            System.out.println("1. Applications");
+            System.out.println("2. Scholars");
+            System.out.println("3. Grants");
+            System.out.println("0. Back");
+            int choice = -1;
+            while (choice < 0 || choice > 3) {
+                System.out.print("Choose: ");
+                try {
+                    choice = Integer.parseInt(scanner.nextLine().trim());
+                } catch (NumberFormatException e) {
+                    choice = -1;
+                }
+                boolean choiceOutOfRange = (choice < 0 || choice > 3);
+                if (choiceOutOfRange) {
+                    System.out.println("Please type a number from " + 0 + " to " + 3 + ".");
+                }
+            }
+
+            if (choice == 0) {
+                running = false;
+            }
+
+            if (choice >= 1) {
+                System.out.println("Leave the username empty to skip a filter.");
+                boolean filtersAreGood = true;
+
+                System.out.print("Username of the Benefactor: ");
+                String benefactorUsername = scanner.nextLine().trim();
+                Benefactor wantedBenefactor = null;
+                boolean askedForBenefactor = (benefactorUsername.equals("") == false);
+                if (askedForBenefactor) {
+                    UserAccount benefactorAccount = db.findAccountByUsername(benefactorUsername);
+                    if (benefactorAccount != null) {
+                        wantedBenefactor = db.findBenefactorById(benefactorAccount.getAccountId());
+                    }
+                    if (wantedBenefactor == null) {
+                        System.out.println("No Benefactor has this username.");
+                        filtersAreGood = false;
+                    }
+                }
+
+                System.out.print("Username of the student: ");
+                String studentUsername = scanner.nextLine().trim();
+                Student wantedStudent = null;
+                boolean askedForStudent = (studentUsername.equals("") == false);
+                if (askedForStudent) {
+                    UserAccount studentAccount = db.findAccountByUsername(studentUsername);
+                    if (studentAccount != null) {
+                        wantedStudent = db.findStudentById(studentAccount.getAccountId());
+                    }
+                    if (wantedStudent == null) {
+                        System.out.println("No student has this username.");
+                        filtersAreGood = false;
+                    }
+                }
+
+                if (filtersAreGood) {
+                    // A scholarship can be chosen after a Benefactor is chosen, from the scholarships of that Benefactor.
+                    Scholarship wantedScholarship = null;
+                    if (wantedBenefactor != null) {
+                        Scholarship[] theirs = db.scholarshipsOf(wantedBenefactor);
+                        System.out.println("Scholarship:");
+                        System.out.println("0. Any");
+                        for (int i = 0; i < theirs.length; i++) {
+                            System.out.println((i + 1) + ". " + theirs[i].getTitle() + " (cycle " + theirs[i].getCycleNo() + ")");
+                        }
+                        int scholarshipPick = -1;
+                        while (scholarshipPick < 0 || scholarshipPick > theirs.length) {
+                            System.out.print("Choose: ");
+                            try {
+                                scholarshipPick = Integer.parseInt(scanner.nextLine().trim());
+                            } catch (NumberFormatException e) {
+                                scholarshipPick = -1;
+                            }
+                            boolean scholarshipPickOutOfRange = (scholarshipPick < 0 || scholarshipPick > theirs.length);
+                            if (scholarshipPickOutOfRange) {
+                                System.out.println("Please type a number from " + 0 + " to " + theirs.length + ".");
+                            }
+                        }
+                        if (scholarshipPick > 0) {
+                            wantedScholarship = theirs[scholarshipPick - 1];
+                        }
+                    }
+
+                    String[] statuses = {"Sent", "Confirmed", "Disputed", "Voided"};
+                    if (choice == 1) {
+                        statuses = new String[] {"Submitted", "Shortlisted", "Returned", "Approved",
+                                "Rejected", "Waitlisted", "Cancelled", "Withdrawn"};
+                    }
+                    if (choice == 2) {
+                        statuses = new String[] {"Active", "Probation", "Suspended", "Lapsed", "Not renewed", "Completed"};
+                    }
+                    System.out.println("Status:");
+                    System.out.println("0. Any");
+                    for (int i = 0; i < statuses.length; i++) {
+                        System.out.println((i + 1) + ". " + statuses[i]);
+                    }
+                    int statusPick = -1;
+                    while (statusPick < 0 || statusPick > statuses.length) {
+                        System.out.print("Choose: ");
+                        try {
+                            statusPick = Integer.parseInt(scanner.nextLine().trim());
+                        } catch (NumberFormatException e) {
+                            statusPick = -1;
+                        }
+                        boolean statusPickOutOfRange = (statusPick < 0 || statusPick > statuses.length);
+                        if (statusPickOutOfRange) {
+                            System.out.println("Please type a number from " + 0 + " to " + statuses.length + ".");
+                        }
+                    }
+                    String wantedStatus = "";
+                    if (statusPick > 0) {
+                        wantedStatus = statuses[statusPick - 1];
+                    }
+
+                    System.out.println();
+
+                    if (choice == 1) {
+                        Application[] found = db.filterAllApplications(wantedBenefactor, wantedScholarship, wantedStudent, wantedStatus);
+                        System.out.println(found.length + " application(s) found.");
+                        for (int i = 0; i < found.length; i++) {
+                            Student student = db.findStudentById(found[i].getStudentId());
+                            String studentText = "(student not found)";
+                            if (student != null) {
+                                studentText = student.toString();
+                            }
+                            String title = "(scholarship not found)";
+                            Scholarship scholarship = db.findScholarshipById(found[i].getScholarshipId());
+                            if (scholarship != null) {
+                                title = scholarship.getTitle();
+                            }
+                            System.out.println((i + 1) + ". " + studentText + " - " + title + ", cycle " + found[i].getCycleNo()
+                                    + " - " + found[i].getStatus());
+                            System.out.println("   File: " + found[i].getCredential() + ", submitted " + found[i].getSubmittedOn());
+                            boolean wasDecided = (found[i].getDecidedOn().equals("") == false);
+                            if (wasDecided) {
+                                System.out.println("   Last decision: " + found[i].getDecidedOn());
+                            }
+                            boolean hasComment = (found[i].getBenefactorComment().equals("") == false);
+                            if (hasComment) {
+                                System.out.println("   Comment of the Benefactor: " + found[i].getBenefactorComment());
+                            }
+                        }
+                    }
+
+                    if (choice == 2) {
+                        Scholar[] found = db.filterAllScholars(wantedBenefactor, wantedScholarship, wantedStudent, wantedStatus);
+                        System.out.println(found.length + " scholar(s) found.");
+                        for (int i = 0; i < found.length; i++) {
+                            Student student = db.findStudentById(found[i].getStudentId());
+                            String studentText = "(student not found)";
+                            if (student != null) {
+                                studentText = student.toString();
+                            }
+                            String title = "(scholarship not found)";
+                            Scholarship scholarship = db.findScholarshipById(found[i].getScholarshipId());
+                            if (scholarship != null) {
+                                title = scholarship.getTitle();
+                            }
+                            System.out.println((i + 1) + ". " + studentText + " - " + title);
+                            String endText = "";
+                            boolean hasEnded = (found[i].getEndDate().equals("") == false);
+                            if (hasEnded) {
+                                endText = ", ended " + found[i].getEndDate();
+                            }
+                            System.out.println("   " + found[i].getStatus() + ", " + found[i].getRenewalCount()
+                                    + " renewal(s), since " + found[i].getStartDate() + endText);
+                        }
+                    }
+
+                    if (choice == 3) {
+                        Grant[] found = db.filterAllGrants(wantedBenefactor, wantedScholarship, wantedStudent, wantedStatus);
+                        System.out.println(found.length + " grant(s) found.");
+                        for (int i = 0; i < found.length; i++) {
+                            String studentText = "(student not found)";
+                            Scholar scholar = db.findScholarById(found[i].getScholarId());
+                            if (scholar != null) {
+                                Student student = db.findStudentById(scholar.getStudentId());
+                                if (student != null) {
+                                    studentText = student.toString();
+                                }
+                            }
+                            String ownerText = "(Benefactor not found)";
+                            Benefactor owner = db.findBenefactorById(found[i].getBenefactorId());
+                            if (owner != null) {
+                                ownerText = owner.getBenefactorName();
+                            }
+                            String referenceText = "no reference";
+                            boolean hasReference = (found[i].getReferenceNo().equals("") == false);
+                            if (hasReference) {
+                                referenceText = "ref " + found[i].getReferenceNo();
+                            }
+                            System.out.println((i + 1) + ". " + studentText + " - from " + ownerText);
+                            System.out.println("   " + String.format("%.2f", found[i].getAmount()) + " by " + found[i].getMethod()
+                                    + " (" + referenceText + ") - " + found[i].getStatus() + ", sent " + found[i].getDateSent());
+                            boolean wasConfirmed = (found[i].getConfirmedOn().equals("") == false);
+                            if (wasConfirmed) {
+                                System.out.println("   Confirmed on " + found[i].getConfirmedOn());
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Purpose: show the summary counts across all Benefactors:
+    // the scholarships by approval status, and the applications, scholars and grants by status.
+    // The DataStore does the counting. This screen only reads and shows the numbers.
+    private void showOfficeSummary() {
+        printHeader("OFFICE SUMMARY");
+
+        String[] approvalStatuses = {"Pending", "Approved", "Rejected"};
+        String[] applicationStatuses = {"Submitted", "Shortlisted", "Returned", "Approved",
+                "Rejected", "Waitlisted", "Cancelled", "Withdrawn"};
+        String[] scholarStatuses = {"Active", "Probation", "Suspended", "Lapsed", "Not renewed", "Completed"};
+        String[] grantStatuses = {"Sent", "Confirmed", "Disputed", "Voided"};
+
+        System.out.println("Scholarships by approval status:");
+        for (int i = 0; i < approvalStatuses.length; i++) {
+            System.out.println("  " + approvalStatuses[i] + ": " + db.countAllScholarshipsByApproval(approvalStatuses[i]));
+        }
+
+        System.out.println("Applications by status:");
+        for (int i = 0; i < applicationStatuses.length; i++) {
+            System.out.println("  " + applicationStatuses[i] + ": " + db.countAllApplicationsByStatus(applicationStatuses[i]));
+        }
+
+        System.out.println("Scholars by status:");
+        for (int i = 0; i < scholarStatuses.length; i++) {
+            System.out.println("  " + scholarStatuses[i] + ": " + db.countAllScholarsByStatus(scholarStatuses[i]));
+        }
+
+        System.out.println("Grants by status:");
+        for (int i = 0; i < grantStatuses.length; i++) {
+            System.out.println("  " + grantStatuses[i] + ": " + db.countAllGrantsByStatus(grantStatuses[i]));
+        }
     }
 
 
