@@ -9,9 +9,6 @@ import java.util.Scanner;
 // Student, Benefactor, Scholarship, Application, Scholar, Grant and DataStore.
 // The screens only ask, call, and print what the classes answer.
 //
-// PART 1 of 3: start screen, sign-in and the Student screens.
-// PART 2 of 3: the Benefactor screens.
-// PART 3 of 3: the Office screens. With this part, the class is complete.
 public class ConsoleMenu {
 
     // ---------- Attributes ----------
