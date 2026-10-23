@@ -22,8 +22,8 @@ public class ScholarshipEditHistory {
     // ---------- Constructor ----------
 
     // Purpose: fill in all the details of one change.
-    public ScholarshipEditHistory(int editId, int scholarshipId, String fieldName,
-                                  String oldValue, String newValue, String editedOn) {
+public ScholarshipEditHistory(int editId, int scholarshipId, String fieldName,
+                              String oldValue, String newValue, String editedOn) {
         this.editId = editId;
         this.scholarshipId = scholarshipId;
         this.fieldName = fieldName;
