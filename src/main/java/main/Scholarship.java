@@ -2,7 +2,8 @@ package main;
 
 // Scholarship is a scholarship posted by a Benefactor.
 // It keeps the details of the scholarship, its cycle (which run it is),
-// its status (Open or Closed) and its approval status (Pending, Approved or Rejected).
+// its status (Open or Closed) and its approval status
+// (Pending, Approved, Rejected, Renewal Pending or Renewal Rejected).
 // Students can see it only when it is approved and open.
 // It also owns the array of its edit records (the edit history).
 public class Scholarship {
@@ -22,9 +23,9 @@ public class Scholarship {
     private double grantAmount;       // optional amount each scholar receives (0 means none)
     private int cycleNo;              // which run of the scholarship this is (1, 2, 3, ...)
     private String status;            // "Open" or "Closed"
-    private String approvalStatus;    // "Pending", "Approved" or "Rejected" (set by the office)
+    private String approvalStatus;    // "Pending", "Approved", "Rejected", "Renewal Pending"
+                                      // or "Renewal Rejected" (set by the office)
     private String createdOn;         // date the scholarship was posted, written as yyyy-MM-dd
-    private boolean renewalPending;   // true while a renewed scholarship waits for the office again
 
     private ScholarshipEditHistory[] editHistory;   // the edit records of this scholarship
     private int editCount;                          // how many places of editHistory are filled
@@ -53,7 +54,6 @@ public class Scholarship {
         this.cycleNo = 1;
         this.status = "Open";
         this.approvalStatus = "Pending";
-        this.renewalPending = false;
 
         this.editHistory = new ScholarshipEditHistory[10];   // starts with 10 places, grows when full
         this.editCount = 0;
@@ -64,10 +64,26 @@ public class Scholarship {
 
     // Purpose: tell if students can see this scholarship.
     // Returns true only when it is approved AND open.
+    // A scholarship that waits for the office (Pending or Renewal Pending) is never visible.
     public boolean isVisible() {
         boolean isApproved = approvalStatus.equals("Approved");
         boolean isOpen = status.equals("Open");
         return isApproved && isOpen;
+    }
+
+    // Purpose: tell if the post waits for the office to approve or reject it.
+    // Returns true when the approval status is Pending (a new post)
+    // or Renewal Pending (a renewed post).
+    public boolean isWaitingForOffice() {
+        boolean isNewPost = approvalStatus.equals("Pending");
+        boolean isRenewal = approvalStatus.equals("Renewal Pending");
+        return isNewPost || isRenewal;
+    }
+
+    // Purpose: tell if the post is a renewed post that waits for the office.
+    // Returns true only when the approval status is Renewal Pending.
+    public boolean isRenewalWaiting() {
+        return approvalStatus.equals("Renewal Pending");
     }
 
     // Purpose: tell if the deadline is over.
@@ -113,69 +129,73 @@ public class Scholarship {
 
     // ---------- Office decisions ----------
 
-    // Purpose: the office approves a Pending post.
+    // Purpose: the office approves a post that waits for it.
     // The approval status becomes Approved.
-    // After a renewal, the cycle number also goes up by 1 and the renewal is no longer pending.
-    // Returns true if it was approved, and false if the post is not Pending.
+    // A Pending post is a new post, so the cycle number stays the same.
+    // A Renewal Pending post is a renewed post, so the cycle number goes up by 1.
+    // Returns true if it was approved, and false if the post is not waiting for the office.
     public boolean approve() {
-        boolean isPending = approvalStatus.equals("Pending");
-        if (isPending == false) {
+        boolean isNewPost = approvalStatus.equals("Pending");
+        boolean isRenewal = approvalStatus.equals("Renewal Pending");
+        if (isNewPost == false && isRenewal == false) {
             return false;
         }
 
-        approvalStatus = "Approved";
-
-        if (renewalPending) {
+        if (isRenewal) {
             cycleNo = cycleNo + 1;
-            renewalPending = false;
         }
+        approvalStatus = "Approved";
         return true;
     }
 
-    // Purpose: the office rejects a Pending post.
+    // Purpose: the office rejects a post that waits for it.
+    // A Pending post becomes Rejected, and a Renewal Pending post becomes Renewal Rejected,
+    // so the system still remembers that the post is a renewal.
     // The reason is told to the Benefactor outside the system, so it is not saved here.
-    // Returns true if it was rejected, and false if the post is not Pending.
+    // Returns true if it was rejected, and false if the post is not waiting for the office.
     public boolean reject() {
-        boolean isPending = approvalStatus.equals("Pending");
-        if (isPending == false) {
-            return false;
+        if (approvalStatus.equals("Pending")) {
+            approvalStatus = "Rejected";
+            return true;
         }
-
-        approvalStatus = "Rejected";
-        return true;
+        if (approvalStatus.equals("Renewal Pending")) {
+            approvalStatus = "Renewal Rejected";
+            return true;
+        }
+        return false;
     }
 
 
     // ---------- Benefactor actions ----------
 
     // Purpose: after a rejection, the Benefactor edits the post and sends it again.
-    // The approval status goes back to Pending.
-    // Returns true if it was sent again, and false if the post is not Rejected.
+    // A Rejected post goes back to Pending, and a Renewal Rejected post goes back to Renewal Pending.
+    // Returns true if it was sent again, and false if the post is not rejected.
     public boolean resubmit() {
-        boolean isRejected = approvalStatus.equals("Rejected");
-        if (isRejected == false) {
-            return false;
+        if (approvalStatus.equals("Rejected")) {
+            approvalStatus = "Pending";
+            return true;
         }
-
-        approvalStatus = "Pending";
-        return true;
+        if (approvalStatus.equals("Renewal Rejected")) {
+            approvalStatus = "Renewal Pending";
+            return true;
+        }
+        return false;
     }
 
     // Purpose: start a renewal (the Renew button).
-    // The scholarship goes back to the office for approval (status Pending, hidden from students).
+    // The scholarship goes back to the office for approval (status Renewal Pending,
+    // hidden from students).
     // The cycle number goes up only AFTER the office approves it (see approve()).
-    // Returns true if the renewal started, and false if the scholarship is not visible
-    // or a renewal is already pending.
+    // Returns true if the renewal started, and false if the scholarship is not visible.
+    // A scholarship that already waits for the office is not visible,
+    // so a second renewal cannot start at the same time.
     public boolean renew() {
         if (isVisible() == false) {
             return false;
         }
-        if (renewalPending) {
-            return false;
-        }
 
-        renewalPending = true;
-        approvalStatus = "Pending";
+        approvalStatus = "Renewal Pending";
         return true;
     }
 
@@ -351,9 +371,5 @@ public class Scholarship {
 
     public String getCreatedOn() {
         return createdOn;
-    }
-
-    public boolean isRenewalPending() {
-        return renewalPending;
     }
 }

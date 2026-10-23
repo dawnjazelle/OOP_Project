@@ -914,7 +914,7 @@ public class ConsoleMenu {
                 System.out.println((i + 1) + ". " + s.getTitle() + " (" + s.getAcademicYear() + ", cycle " + s.getCycleNo()
                         + ") - deadline " + s.getDeadline() + " - " + s.getStatus() + ", " + s.getApprovalStatus());
                 System.out.println("   Slots: " + s.getSlots() + ", grant amount " + String.format("%.2f", s.getGrantAmount()));
-                if (s.isRenewalPending()) {
+                if (s.isRenewalWaiting()) {
                     System.out.println("   Renewal waiting for the approval of the office.");
                 }
             }
@@ -2140,7 +2140,7 @@ public class ConsoleMenu {
                     }
 
                     String kind = "New post";
-                    if (s.isRenewalPending()) {
+                    if (s.isRenewalWaiting()) {
                         kind = "Renewal of cycle " + s.getCycleNo();
                     }
 
@@ -2428,7 +2428,7 @@ public class ConsoleMenu {
     private void showOfficeSummary() {
         printHeader("OFFICE SUMMARY");
 
-        String[] approvalStatuses = {"Pending", "Approved", "Rejected"};
+        String[] approvalStatuses = {"Pending", "Renewal Pending", "Approved", "Rejected", "Renewal Rejected"};
         String[] applicationStatuses = {"Submitted", "Shortlisted", "Returned", "Approved",
                 "Rejected", "Waitlisted", "Cancelled", "Withdrawn"};
         String[] scholarStatuses = {"Active", "Probation", "Suspended", "Lapsed", "Not renewed", "Completed"};

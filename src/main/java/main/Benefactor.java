@@ -234,7 +234,7 @@ public class Benefactor extends UserAccount {
         db.createEditHistory(scholarship, field, oldValue, newValue);
 
         // 5. A rejected post goes back to Pending after it is edited.
-        boolean wasRejected = scholarship.getApprovalStatus().equals("Rejected");
+        boolean wasRejected = scholarship.getApprovalStatus().equals("Rejected") || scholarship.getApprovalStatus().equals("Renewal Rejected");
         if (wasRejected) {
             scholarship.resubmit();
         }

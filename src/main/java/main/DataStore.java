@@ -483,10 +483,11 @@ public class DataStore {
     }
 
     // Purpose: the scholarships that wait for the office to approve or reject them.
+    // A new post (Pending) and a renewed post (Renewal Pending) both wait here.
     public Scholarship[] pendingScholarships() {
         int total = 0;
         for (int i = 0; i < scholarshipCount; i++) {
-            if (scholarships[i].getApprovalStatus().equals("Pending")) {
+            if (scholarships[i].isWaitingForOffice()) {
                 total = total + 1;
             }
         }
@@ -494,7 +495,7 @@ public class DataStore {
         Scholarship[] result = new Scholarship[total];
         int next = 0;
         for (int i = 0; i < scholarshipCount; i++) {
-            if (scholarships[i].getApprovalStatus().equals("Pending")) {
+            if (scholarships[i].isWaitingForOffice()) {
                 result[next] = scholarships[i];
                 next = next + 1;
             }
@@ -919,7 +920,8 @@ public class DataStore {
     // ---------- Counting: the Office summary (all Benefactors) ----------
     // These only read the records. They never change them.
 
-    // Purpose: count all scholarships with a given approval status (Pending, Approved or Rejected).
+    // Purpose: count all scholarships with a given approval status
+    // (Pending, Approved, Rejected, Renewal Pending or Renewal Rejected).
     public int countAllScholarshipsByApproval(String approvalStatus) {
         int total = 0;
         for (int i = 0; i < scholarshipCount; i++) {
@@ -1126,7 +1128,9 @@ public class DataStore {
     // for the renewal as Lapsed. A lapsed scholar is free to apply to other scholarships.
     // today is the current date, written as yyyy-MM-dd.
     // It does something only when the scholarship is renewed (cycle 2 or more), is live
-    // (approved and open, with no new renewal waiting for the office), and its deadline is over.
+    // (approved and open), and its deadline is over.
+    // A renewed post that waits for the office again (Renewal Pending or Renewal Rejected)
+    // is not approved, so it is not checked.
     // A scholar "has applied" when there is an application of that student to this scholarship
     // for the current cycle (with any status).
     // Returns how many scholars were marked as Lapsed.
@@ -1137,8 +1141,8 @@ public class DataStore {
             return 0;
         }
 
-        // 2. It must be live: approved and open, and not waiting for another renewal.
-        boolean isLive = scholarship.isVisible() && (scholarship.isRenewalPending() == false);
+        // 2. It must be live: approved and open.
+        boolean isLive = scholarship.isVisible();
         if (isLive == false) {
             return 0;
         }
