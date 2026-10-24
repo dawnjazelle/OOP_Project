@@ -247,6 +247,7 @@ public class Scholarship {
     // Purpose: give a short text of the scholarship for lists and printing.
     // Example: "[1] Merit Scholarship (2026-2027, cycle 1) - deadline 2026-12-31 - Open, Approved"
     // toString() replaces (overrides) the toString() that every Java object has.
+    @Override
     public String toString() {
         return "[" + scholarshipId + "] " + title + " (" + academicYear + ", cycle " + cycleNo
                 + ") - deadline " + deadline + " - " + status + ", " + approvalStatus;

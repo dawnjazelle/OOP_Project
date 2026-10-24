@@ -307,8 +307,9 @@ public class DataStore {
     // Purpose: save a new grant that a Benefactor sent to a scholar.
     // Benefactor.recordGrant already checked the values.
     // The grant starts as Sent, and today is saved as the date sent.
+    // The Benefactor is not saved in the grant: it is found through the scholar's scholarship.
     // Returns the ID of the new grant, or 0 if the array is full.
-    public int createGrant(Scholar scholar, Benefactor benefactor, double amount,
+    public int createGrant(Scholar scholar, double amount,
                            String method, String referenceNo) {
         boolean hasNoRoom = (grantCount == grants.length);
         if (hasNoRoom) {
@@ -316,7 +317,7 @@ public class DataStore {
         }
 
         int newId = nextGrantId;
-        Grant grant = new Grant(newId, scholar.getScholarId(), benefactor.getBenefactorId(),
+        Grant grant = new Grant(newId, scholar.getScholarId(),
                 amount, method, today, referenceNo);
 
         grants[grantCount] = grant;
@@ -359,6 +360,31 @@ public class DataStore {
             }
         }
         return null;
+    }
+
+    // Purpose: find the Benefactor who recorded a grant.
+    // A grant does not keep its Benefactor. The link is: grant -> scholar -> scholarship -> Benefactor.
+    // Returns null if any record on the way is not found.
+    public Benefactor findBenefactorOfGrant(Grant grant) {
+        Scholar scholar = findScholarById(grant.getScholarId());
+        if (scholar == null) {
+            return null;
+        }
+        Scholarship scholarship = findScholarshipById(scholar.getScholarshipId());
+        if (scholarship == null) {
+            return null;
+        }
+        return findBenefactorById(scholarship.getBenefactorId());
+    }
+
+    // Purpose: tell if a grant belongs to a Benefactor.
+    // Returns true if the Benefactor who recorded the grant is this Benefactor.
+    public boolean grantBelongsTo(Grant grant, Benefactor benefactor) {
+        Benefactor owner = findBenefactorOfGrant(grant);
+        if (owner == null) {
+            return false;
+        }
+        return (owner.getBenefactorId() == benefactor.getBenefactorId());
     }
 
     // Purpose: find a scholarship by its ID.
@@ -894,7 +920,7 @@ public class DataStore {
     public int countGrantsByStatus(Benefactor benefactor, String status) {
         int total = 0;
         for (int i = 0; i < grantCount; i++) {
-            boolean sameBenefactor = (grants[i].getBenefactorId() == benefactor.getBenefactorId());
+            boolean sameBenefactor = grantBelongsTo(grants[i], benefactor);
             boolean sameStatus = grants[i].getStatus().equalsIgnoreCase(status.trim());
             if (sameBenefactor && sameStatus) {
                 total = total + 1;
@@ -907,7 +933,7 @@ public class DataStore {
     public double totalGrantAmountByStatus(Benefactor benefactor, String status) {
         double total = 0;
         for (int i = 0; i < grantCount; i++) {
-            boolean sameBenefactor = (grants[i].getBenefactorId() == benefactor.getBenefactorId());
+            boolean sameBenefactor = grantBelongsTo(grants[i], benefactor);
             boolean sameStatus = grants[i].getStatus().equalsIgnoreCase(status.trim());
             if (sameBenefactor && sameStatus) {
                 total = total + grants[i].getAmount();
@@ -1082,7 +1108,7 @@ public class DataStore {
             boolean anyBenefactor = (benefactor == null);
             boolean benefactorMatches = anyBenefactor;
             if (anyBenefactor == false) {
-                benefactorMatches = (grants[i].getBenefactorId() == benefactor.getBenefactorId());
+                benefactorMatches = grantBelongsTo(grants[i], benefactor);
             }
 
             boolean anyScholarship = (scholarship == null);

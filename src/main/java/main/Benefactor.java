@@ -46,12 +46,14 @@ public class Benefactor extends UserAccount {
 
     // Purpose: give the name of this role.
     // This replaces (overrides) getRole() of UserAccount.
+    @Override
     public String getRole() {
         return "Benefactor";
     }
 
     // Purpose: give the menu items that a Benefactor can use.
     // This replaces (overrides) getMenuOptions() of UserAccount.
+    @Override
     public String[] getMenuOptions() {
         String[] options = {
             "My page",
@@ -562,15 +564,16 @@ public class Benefactor extends UserAccount {
         }
 
         // All checks passed, so the DataStore saves the grant as Sent.
-        return db.createGrant(scholar, this, amount, method, referenceNo.trim());
+        return db.createGrant(scholar, amount, method, referenceNo.trim());
     }
 
     // Purpose: void a wrong grant record. A grant is never edited or deleted, only voided.
     // If needed, the Benefactor records a new grant to replace it.
     // Returns true if it was voided, and false if it is not this Benefactor's grant
     // or it is already voided.
-    public boolean voidGrant(Grant grant) {
-        boolean isMine = (grant.getBenefactorId() == benefactorId);
+    // The grant is his or hers if its scholar is a scholar of the Benefactor's own scholarship.
+    public boolean voidGrant(DataStore db, Grant grant) {
+        boolean isMine = db.grantBelongsTo(grant, this);
         if (isMine == false) {
             return false;
         }
@@ -637,6 +640,7 @@ public class Benefactor extends UserAccount {
     // Purpose: give a short text of the Benefactor for lists and printing.
     // Example: "Bulacan LGU (LGU)"
     // toString() replaces (overrides) the toString() that every Java object has.
+    @Override
     public String toString() {
         return benefactorName + " (" + category + ")";
     }

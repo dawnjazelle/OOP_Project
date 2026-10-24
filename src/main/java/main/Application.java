@@ -134,6 +134,7 @@ public class Application {
     // Purpose: give a short text of the application for lists and printing.
     // Example: "[3] Scholarship 1, cycle 1 - Submitted - ana.pdf (submitted 2026-10-20)"
     // toString() replaces (overrides) the toString() that every Java object has.
+    @Override
     public String toString() {
         return "[" + applicationId + "] Scholarship " + scholarshipId + ", cycle " + cycleNo
                 + " - " + status + " - " + credential + " (submitted " + submittedOn + ")";

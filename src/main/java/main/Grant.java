@@ -12,7 +12,6 @@ public class Grant {
 
     private int grantId;          // unique ID of this grant record
     private int scholarId;        // ID of the scholar who receives the grant
-    private int benefactorId;     // ID of the Benefactor who recorded it
     private double amount;        // how much was sent
     private String method;        // "GCash", "Bank transfer" or "Cash"
     private String dateSent;      // date the Benefactor sent it, yyyy-MM-dd
@@ -25,11 +24,12 @@ public class Grant {
 
     // Purpose: save a new grant record.
     // A new grant always starts as Sent, and it is not confirmed yet.
-    public Grant(int grantId, int scholarId, int benefactorId, double amount,
+    // The Benefactor is not saved here: it is found through the scholar,
+    // the scholar's scholarship and the Benefactor who posted that scholarship.
+    public Grant(int grantId, int scholarId, double amount,
                  String method, String dateSent, String referenceNo) {
         this.grantId = grantId;
         this.scholarId = scholarId;
-        this.benefactorId = benefactorId;
         this.amount = amount;
         this.method = method;
         this.dateSent = dateSent;
@@ -44,11 +44,17 @@ public class Grant {
     // The status changes only through the methods below, and each method
     // changes it only when the current status allows it.
 
+    // Purpose: tell if the scholar can still answer this grant (confirm or dispute it).
+    // Only a grant that is still "Sent" can be answered.
+    public boolean canBeAnswered() {
+        return status.equals("Sent");
+    }
+
     // Purpose: the scholar confirms that the grant was received.
     // The status becomes Confirmed, and the confirmation date (today) is saved.
     // Returns true if it was confirmed, and false if the grant is not "Sent".
     public boolean confirm(String today) {
-        boolean isSent = status.equals("Sent");
+        boolean isSent = canBeAnswered();
         if (isSent == false) {
             return false;
         }
@@ -62,7 +68,7 @@ public class Grant {
     // The status becomes Disputed.
     // Returns true if it was disputed, and false if the grant is not "Sent".
     public boolean dispute() {
-        boolean isSent = status.equals("Sent");
+        boolean isSent = canBeAnswered();
         if (isSent == false) {
             return false;
         }
@@ -90,6 +96,7 @@ public class Grant {
     // Purpose: give a short text of the grant for lists and printing.
     // Example: "[1] Scholar 1 - 1000.00 by GCash (ref REF123) - Sent on 2026-10-20"
     // toString() replaces (overrides) the toString() that every Java object has.
+    @Override
     public String toString() {
         // String.format works like printf: %.2f means a number with 2 decimals.
         String amountText = String.format("%.2f", amount);
@@ -116,10 +123,6 @@ public class Grant {
 
     public int getScholarId() {
         return scholarId;
-    }
-
-    public int getBenefactorId() {
-        return benefactorId;
     }
 
     public double getAmount() {

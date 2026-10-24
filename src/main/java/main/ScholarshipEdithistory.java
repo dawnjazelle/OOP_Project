@@ -38,6 +38,7 @@ public ScholarshipEditHistory(int editId, int scholarshipId, String fieldName,
     // Purpose: give a short text of the change for lists and printing.
     // Example: "2026-10-20 - deadline: 2026-12-31 -> 2027-01-15"
     // toString() replaces (overrides) the toString() that every Java object has.
+    @Override
     public String toString() {
         return editedOn + " - " + fieldName + ": " + oldValue + " -> " + newValue;
     }

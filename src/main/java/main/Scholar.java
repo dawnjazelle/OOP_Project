@@ -112,6 +112,7 @@ public class Scholar {
     // Example while it goes on: "[1] Student 2, Scholarship 1 - Active, 0 renewals (since 2026-10-20)"
     // Example after it ended:   "[1] Student 2, Scholarship 1 - Completed, 1 renewals (2026-10-20 to 2027-03-31)"
     // toString() replaces (overrides) the toString() that every Java object has.
+    @Override
     public String toString() {
         String text = "[" + scholarId + "] Student " + studentId + ", Scholarship " + scholarshipId
                 + " - " + status + ", " + renewalCount + " renewals ";

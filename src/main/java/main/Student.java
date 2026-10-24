@@ -47,12 +47,14 @@ public class Student extends UserAccount {
 
     // Purpose: give the name of this role.
     // This replaces (overrides) getRole() of UserAccount.
+    @Override
     public String getRole() {
         return "Student";
     }
 
     // Purpose: give the menu items that a student can use.
     // This replaces (overrides) getMenuOptions() of UserAccount.
+    @Override
     public String[] getMenuOptions() {
         String[] options = {
             "Browse scholarships",
@@ -243,6 +245,7 @@ public class Student extends UserAccount {
     // Purpose: give a short text of the student for lists and printing.
     // Example: "2024-0001 - Cruz, Ana Bautista (BSIT)"
     // toString() replaces (overrides) the toString() that every Java object has.
+    @Override
     public String toString() {
         return studentNumber + " - " + getFullName() + " (" + course + ")";
     }

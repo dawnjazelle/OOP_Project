@@ -629,7 +629,7 @@ public class ConsoleMenu {
                     running = false;
                 } else {
                     Grant grant = grants[pick - 1];
-                    boolean canAnswer = grant.getStatus().equals("Sent");
+                    boolean canAnswer = grant.canBeAnswered();
                     if (canAnswer == false) {
                         System.out.println("This grant is already " + grant.getStatus() + ", so it cannot be answered.");
                     } else {
@@ -1798,7 +1798,7 @@ public class ConsoleMenu {
                                 }
                             }
                             if (sure) {
-                                boolean voided = benefactor.voidGrant(myGrants[grantPick - 1]);
+                                boolean voided = benefactor.voidGrant(db, myGrants[grantPick - 1]);
                                 if (voided) {
                                     System.out.println("The grant was voided. If needed, record a new grant to replace it.");
                                 } else {
@@ -2399,7 +2399,7 @@ public class ConsoleMenu {
                                 }
                             }
                             String ownerText = "(Benefactor not found)";
-                            Benefactor owner = db.findBenefactorById(found[i].getBenefactorId());
+                            Benefactor owner = db.findBenefactorOfGrant(found[i]);
                             if (owner != null) {
                                 ownerText = owner.getBenefactorName();
                             }
