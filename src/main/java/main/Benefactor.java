@@ -2,57 +2,47 @@ package main;
 
 // Benefactor is a user who offers scholarships (a government office, a company,
 // a foundation, an alumni group or an LGU).
-// It extends (inherits from) UserAccount, so it already has the login data and the sign-in rules.
-// Here we add the page details of the Benefactor and the things a Benefactor can do:
+// It extends UserAccount and adds the page details and the Benefactor actions:
 // post scholarships, decide applications, manage scholars and record grants.
-// A Benefactor can act only on its OWN scholarships, scholars and grants.
+// A Benefactor can act only on its own scholarships, scholars and grants.
 public class Benefactor extends UserAccount {
 
     // ---------- Attributes ----------
-    // They are private, so other classes must use the getters below.
 
     private int benefactorId;         // unique ID of the Benefactor (same number as the accountId)
     private String benefactorName;    // name of the organization or person
     private String category;          // government, private company, foundation, alumni or LGU
     private String description;       // short introduction shown on the Benefactor's page
-    private String email;             // email, used to contact approved applicants
-    private String contactNumber;     // phone number
     private String address;           // address
 
 
     // ---------- Constructor ----------
 
     // Purpose: create a new Benefactor.
-    // The first four values are for the account part (they go to UserAccount),
-    // the rest are the page details.
+    // The account values (including the email and the contact number) go to UserAccount.
+    // The rest are the page details.
     public Benefactor(int benefactorId, String username, String tempPassword, String createdOn,
                       String benefactorName, String category, String description,
                       String email, String contactNumber, String address) {
-        // super(...) calls the constructor of UserAccount.
-        // The accountId is the same number as the benefactorId, and the account type is "Benefactor".
-        super(benefactorId, username, tempPassword, "Benefactor", createdOn);
+        super(benefactorId, username, tempPassword, "Benefactor", createdOn, email, contactNumber);
 
         this.benefactorId = benefactorId;
         this.benefactorName = benefactorName;
         this.category = category;
         this.description = description;
-        this.email = email;
-        this.contactNumber = contactNumber;
         this.address = address;
     }
 
 
-    // ---------- Methods that replace the abstract methods of UserAccount ----------
+    // ---------- Methods that override UserAccount ----------
 
     // Purpose: give the name of this role.
-    // This replaces (overrides) getRole() of UserAccount.
     @Override
     public String getRole() {
         return "Benefactor";
     }
 
     // Purpose: give the menu items that a Benefactor can use.
-    // This replaces (overrides) getMenuOptions() of UserAccount.
     @Override
     public String[] getMenuOptions() {
         String[] options = {
@@ -70,25 +60,21 @@ public class Benefactor extends UserAccount {
     // ---------- Page ----------
 
     // Purpose: change the details of the Benefactor's own page.
+    // The email and the contact number are changed with updateContact() of UserAccount.
     // Returns true if the page was updated, and false if the name, the category
-    // or the contact details (email, contact number, address) are empty.
-    public boolean updatePage(String name, String category, String description,
-                              String email, String contactNumber, String address) {
+    // or the address is empty.
+    public boolean updatePage(String name, String category, String description, String address) {
         boolean nameIsEmpty = name.trim().equals("");
         boolean categoryIsEmpty = category.trim().equals("");
-        boolean emailIsEmpty = email.trim().equals("");
-        boolean numberIsEmpty = contactNumber.trim().equals("");
         boolean addressIsEmpty = address.trim().equals("");
 
-        if (nameIsEmpty || categoryIsEmpty || emailIsEmpty || numberIsEmpty || addressIsEmpty) {
+        if (nameIsEmpty || categoryIsEmpty || addressIsEmpty) {
             return false;
         }
 
         this.benefactorName = name.trim();
         this.category = category.trim();
         this.description = description.trim();
-        this.email = email.trim();
-        this.contactNumber = contactNumber.trim();
         this.address = address.trim();
         return true;
     }
@@ -97,7 +83,7 @@ public class Benefactor extends UserAccount {
     // ---------- Scholarships ----------
 
     // Purpose: post a new scholarship.
-    // Its approval status starts as Pending, so students cannot see it until the office approves it.
+    // The approval status starts as Pending, so students cannot see it until the office approves it.
     // deadline is written as yyyy-MM-dd, for example 2026-12-31.
     // Returns the ID of the new scholarship, or 0 if:
     // a text value is empty, the slots are below 1, the grant amount is below 0,
@@ -117,7 +103,7 @@ public class Benefactor extends UserAccount {
             return 0;
         }
 
-        // 2. There must be at least 1 slot, and the grant amount cannot be negative.
+        // 2. At least 1 slot, and the grant amount cannot be negative.
         if (slots < 1) {
             return 0;
         }
@@ -125,8 +111,8 @@ public class Benefactor extends UserAccount {
             return 0;
         }
 
-        // 3. The deadline must be a real date, and it must be today or later.
-        // Dates written as yyyy-MM-dd can be compared as text: the later date is the bigger text.
+        // 3. The deadline must be a real date, today or later.
+        // Dates in yyyy-MM-dd form are compared as text.
         String cleanDeadline = deadline.trim();
         boolean deadlineIsRealDate = isValidDate(cleanDeadline);
         if (deadlineIsRealDate == false) {
@@ -137,7 +123,7 @@ public class Benefactor extends UserAccount {
             return 0;
         }
 
-        // All checks passed, so the DataStore saves the scholarship as Pending.
+        // The DataStore saves the scholarship as Pending.
         return db.createScholarship(this, title.trim(), academicYear.trim(), qualification.trim(),
                                     requirement.trim(), description.trim(), slots,
                                     grantAmount, cleanDeadline);
@@ -147,7 +133,7 @@ public class Benefactor extends UserAccount {
     // field is one of: title, academicYear, qualification, requirement, description,
     // slots, deadline, grantAmount. value is the new value, typed as text.
     // The old and the new value are saved in the edit history.
-    // A rejected post goes back to Pending, so the office can check it again.
+    // A rejected post goes back to Pending after the edit.
     // Returns true if the change was made, and false if the scholarship is not
     // the Benefactor's, or the field or the value is not valid.
     public boolean editScholarship(DataStore db, Scholarship scholarship, String field, String value) {
@@ -163,7 +149,7 @@ public class Benefactor extends UserAccount {
             return false;
         }
 
-        // 3. Find the field, check the new value, and change it.
+        // 3. Check the new value for the field, and change it.
         // oldValue keeps the value before the change, for the edit history.
         String oldValue = "";
 
@@ -188,12 +174,12 @@ public class Benefactor extends UserAccount {
             scholarship.setDescription(newValue);
 
         } else if (field.equals("slots")) {
-            // The value is text, so we change it to a whole number first.
+            // The text must be a whole number of at least 1.
             int newSlots = 0;
             try {
                 newSlots = Integer.parseInt(newValue);
             } catch (NumberFormatException e) {
-                return false;     // it was not a whole number
+                return false;     // not a whole number
             }
             if (newSlots < 1) {
                 return false;
@@ -202,12 +188,12 @@ public class Benefactor extends UserAccount {
             scholarship.setSlots(newSlots);
 
         } else if (field.equals("grantAmount")) {
-            // The value is text, so we change it to a number with decimals first.
+            // The text must be a number of at least 0.
             double newAmount = 0;
             try {
                 newAmount = Double.parseDouble(newValue);
             } catch (NumberFormatException e) {
-                return false;     // it was not a number
+                return false;     // not a number
             }
             if (newAmount < 0) {
                 return false;
@@ -216,7 +202,7 @@ public class Benefactor extends UserAccount {
             scholarship.setGrantAmount(newAmount);
 
         } else if (field.equals("deadline")) {
-            // The new deadline must be a real date, and it must be today or later.
+            // The new deadline must be a real date, today or later.
             boolean deadlineIsRealDate = isValidDate(newValue);
             if (deadlineIsRealDate == false) {
                 return false;
@@ -229,13 +215,13 @@ public class Benefactor extends UserAccount {
             scholarship.setDeadline(newValue);
 
         } else {
-            return false;         // there is no field with this name
+            return false;         // no field with this name
         }
 
         // 4. Save the change in the edit history of the scholarship.
         db.createEditHistory(scholarship, field, oldValue, newValue);
 
-        // 5. A rejected post goes back to Pending after it is edited.
+        // 5. A rejected post goes back to Pending.
         boolean wasRejected = scholarship.getApprovalStatus().equals("Rejected") || scholarship.getApprovalStatus().equals("Renewal Rejected");
         if (wasRejected) {
             scholarship.resubmit();
@@ -245,7 +231,7 @@ public class Benefactor extends UserAccount {
 
     // Purpose: start a renewal (the Renew button).
     // The scholarship goes back to the office for approval,
-    // and its pending applications from the old cycle become Withdrawn.
+    // and its pending applications become Withdrawn.
     // Returns true if the renewal started, and false if it cannot be renewed.
     public boolean renewScholarship(DataStore db, Scholarship scholarship) {
         // It must be the Benefactor's own scholarship.
@@ -254,7 +240,6 @@ public class Benefactor extends UserAccount {
             return false;
         }
 
-        // The Scholarship class decides if it can be renewed.
         boolean renewed = scholarship.renew();
         if (renewed == false) {
             return false;
@@ -281,7 +266,6 @@ public class Benefactor extends UserAccount {
             return false;
         }
 
-        // The Scholarship class decides if it can be closed.
         boolean closed = scholarship.close();
         if (closed == false) {
             return false;
@@ -295,8 +279,7 @@ public class Benefactor extends UserAccount {
             }
         }
 
-        // complete() works only on Active or Probation scholars,
-        // so the scholars with any other status stay as they are.
+        // Active and Probation scholars become Completed. Other statuses stay as they are.
         Scholar[] scholars = db.scholarsOfScholarship(scholarship);
         for (int i = 0; i < scholars.length; i++) {
             scholars[i].complete(db.getToday());
@@ -317,7 +300,6 @@ public class Benefactor extends UserAccount {
             return false;
         }
 
-        // The Application class refuses "Returned" if the status is not Submitted.
         return application.decide("Returned", comment.trim(), today);
     }
 
@@ -335,13 +317,13 @@ public class Benefactor extends UserAccount {
     // the student already holds a scholarship or was a scholar of this scholarship before,
     // no slot is left, or there is no room to save the scholar record.
     public int approveApplication(DataStore db, Application application) {
-        // 1. The application must still be pending.
+        // 1. The application must be pending.
         boolean isPending = application.isPending();
         if (isPending == false) {
             return 0;
         }
 
-        // 2. Find the scholarship and the student. The scholarship must be the Benefactor's own.
+        // 2. The scholarship must be the Benefactor's own.
         Scholarship scholarship = db.findScholarshipById(application.getScholarshipId());
         Student student = db.findStudentById(application.getStudentId());
         boolean recordsAreMissing = (scholarship == null) || (student == null);
@@ -353,8 +335,8 @@ public class Benefactor extends UserAccount {
             return 0;
         }
 
-        // 3. A student who already holds a scholarship cannot be approved for another one.
-        //    A student can also be a scholar of the same scholarship only once.
+        // 3. The student must not hold a scholarship,
+        //    and must not have been a scholar of this scholarship before.
         Scholar holding = db.findBlockingScholar(student);
         boolean alreadyScholar = (holding != null);
         if (alreadyScholar) {
@@ -366,8 +348,7 @@ public class Benefactor extends UserAccount {
             return 0;
         }
 
-        // 4. A slot must be left. Slots are counted per cycle,
-        //    and only approved applications use a slot.
+        // 4. A slot must be left. Slots are counted per cycle, by approved applications.
         int approvedCount = db.countApprovedInCycle(scholarship, application.getCycleNo());
         boolean noSlotLeft = (approvedCount >= scholarship.getSlots());
         if (noSlotLeft) {
@@ -375,14 +356,12 @@ public class Benefactor extends UserAccount {
         }
 
         // 5. The DataStore creates the scholar record (status Active).
-        //    We do this first, so if there is no room we stop before changing the application.
         int scholarId = db.createScholar(application);
         if (scholarId == 0) {
             return 0;
         }
 
         // 6. Mark the application as Approved.
-        //    This cannot fail here, because we already checked that it is pending.
         application.decide("Approved", "", db.getToday());
 
         // 7. Withdraw the other pending applications of this student.
@@ -402,8 +381,8 @@ public class Benefactor extends UserAccount {
     }
 
     // Purpose: put an application on the waiting list (for applicants beyond the slots).
-    // Returns true if it was waitlisted, and false if it cannot be waitlisted.
     // Only a Submitted or Shortlisted application can be waitlisted.
+    // Returns true if it was waitlisted, and false if it cannot be waitlisted.
     public boolean waitlistApplication(Application application, String today) {
         String status = application.getStatus();
         boolean canWaitlist = status.equals("Submitted") || status.equals("Shortlisted");
@@ -447,20 +426,20 @@ public class Benefactor extends UserAccount {
             return false;
         }
 
-        // 4. Probation needs a comment that tells the conditions.
+        // 4. Probation needs a comment with the conditions.
         boolean commentIsEmpty = comment.trim().equals("");
         if (probation && commentIsEmpty) {
             return false;
         }
 
-        // 5. A slot must be left, because renewing scholars count against the slots of the cycle.
+        // 5. A slot must be left. Renewing scholars count against the slots of the cycle.
         int approvedCount = db.countApprovedInCycle(scholarship, application.getCycleNo());
         boolean noSlotLeft = (approvedCount >= scholarship.getSlots());
         if (noSlotLeft) {
             return false;
         }
 
-        // 6. Mark the application as Approved (this fails if it is not pending).
+        // 6. Mark the application as Approved.
         boolean approved = application.decide("Approved", comment.trim(), db.getToday());
         if (approved == false) {
             return false;
@@ -481,13 +460,13 @@ public class Benefactor extends UserAccount {
     // and the student can apply to other scholarships.
     // Returns true if it was rejected, and false if it cannot be rejected.
     public boolean rejectRenewal(DataStore db, Application application, String comment) {
-        // 1. Mark the application as Rejected (this fails if it is not pending).
+        // 1. Mark the application as Rejected.
         boolean rejected = application.decide("Rejected", comment.trim(), db.getToday());
         if (rejected == false) {
             return false;
         }
 
-        // 2. Find the scholar record and set it to "Not renewed".
+        // 2. Set the scholar record to "Not renewed".
         Student student = db.findStudentById(application.getStudentId());
         Scholarship scholarship = db.findScholarshipById(application.getScholarshipId());
         boolean recordsAreMissing = (student == null) || (scholarship == null);
@@ -496,7 +475,6 @@ public class Benefactor extends UserAccount {
         }
         Scholar scholar = db.findScholar(student, scholarship);
         if (scholar != null) {
-            // setStatus works only while the scholar still holds the scholarship.
             scholar.setStatus("Not renewed", db.getToday());
         }
         return true;
@@ -517,14 +495,13 @@ public class Benefactor extends UserAccount {
             return false;
         }
 
-        // The Scholar class refuses the change if the scholarship already ended.
         return scholar.setStatus(status, today);
     }
 
 
     // ---------- Grants ----------
 
-    // Purpose: record a grant that was sent to a scholar OUTSIDE the system.
+    // Purpose: record a grant that was sent to a scholar outside the system.
     // The system never sends or holds money, it only keeps the record.
     // method is GCash, Bank transfer or Cash. The reference number is needed unless it is cash.
     // The grant starts as Sent.
@@ -532,7 +509,7 @@ public class Benefactor extends UserAccount {
     // or a value is not valid.
     public int recordGrant(DataStore db, Scholar scholar, double amount,
                            String method, String referenceNo) {
-        // 1. The scholar must be a scholar of the Benefactor's own scholarship.
+        // 1. The scholar must belong to the Benefactor's own scholarship.
         Scholarship scholarship = db.findScholarshipById(scholar.getScholarshipId());
         if (scholarship == null) {
             return 0;
@@ -548,14 +525,14 @@ public class Benefactor extends UserAccount {
             return 0;
         }
 
-        // 3. The method must be one of the three allowed methods.
+        // 3. The method must be GCash, Bank transfer or Cash.
         boolean methodIsValid = method.equals("GCash") || method.equals("Bank transfer")
                 || method.equals("Cash");
         if (methodIsValid == false) {
             return 0;
         }
 
-        // 4. A reference number is needed unless the grant was given in cash.
+        // 4. A reference number is needed unless the grant is cash.
         boolean isCash = method.equals("Cash");
         boolean referenceIsEmpty = referenceNo.trim().equals("");
         boolean referenceIsOk = isCash || (referenceIsEmpty == false);
@@ -563,15 +540,15 @@ public class Benefactor extends UserAccount {
             return 0;
         }
 
-        // All checks passed, so the DataStore saves the grant as Sent.
+        // The DataStore saves the grant as Sent.
         return db.createGrant(scholar, amount, method, referenceNo.trim());
     }
 
     // Purpose: void a wrong grant record. A grant is never edited or deleted, only voided.
     // If needed, the Benefactor records a new grant to replace it.
+    // The grant is the Benefactor's if its scholar belongs to the Benefactor's own scholarship.
     // Returns true if it was voided, and false if it is not this Benefactor's grant
     // or it is already voided.
-    // The grant is his or hers if its scholar is a scholar of the Benefactor's own scholarship.
     public boolean voidGrant(DataStore db, Grant grant) {
         boolean isMine = db.grantBelongsTo(grant, this);
         if (isMine == false) {
@@ -583,10 +560,9 @@ public class Benefactor extends UserAccount {
 
     // ---------- Helper ----------
 
-    // Purpose: used by postScholarship and editScholarship.
-    // Checks that the text is a real date written as yyyy-MM-dd, for example 2026-12-31.
-    // Returns true if it is, and false if it is not.
-    // It is private because only this class needs it.
+    // Purpose: check that the text is a real date written as yyyy-MM-dd, for example 2026-12-31.
+    // Used by postScholarship and editScholarship.
+    // Returns true if it is a real date, and false if it is not.
     private boolean isValidDate(String text) {
         // 1. It must have 10 characters, with a dash after the year and after the month.
         if (text.length() != 10) {
@@ -607,7 +583,7 @@ public class Benefactor extends UserAccount {
             month = Integer.parseInt(text.substring(5, 7));
             day = Integer.parseInt(text.substring(8, 10));
         } catch (NumberFormatException e) {
-            return false;         // one of them was not a number
+            return false;         // one of them is not a number
         }
 
         // 3. The month must be from 1 to 12.
@@ -639,7 +615,6 @@ public class Benefactor extends UserAccount {
 
     // Purpose: give a short text of the Benefactor for lists and printing.
     // Example: "Bulacan LGU (LGU)"
-    // toString() replaces (overrides) the toString() that every Java object has.
     @Override
     public String toString() {
         return benefactorName + " (" + category + ")";
@@ -663,14 +638,6 @@ public class Benefactor extends UserAccount {
 
     public String getDescription() {
         return description;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public String getContactNumber() {
-        return contactNumber;
     }
 
     public String getAddress() {

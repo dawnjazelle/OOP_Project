@@ -887,8 +887,9 @@ public class ConsoleMenu {
                     address = newAddress;
                 }
 
-                boolean updated = benefactor.updatePage(name, category, description, email, contactNumber, address);
-                if (updated) {
+                boolean pageUpdated = benefactor.updatePage(name, category, description, address);
+                boolean contactUpdated = benefactor.updateContact(email, contactNumber);
+                if (pageUpdated && contactUpdated) {
                     System.out.println("The page was updated.");
                 } else {
                     System.out.println("The page was not updated. The name, category, email, contact number and address cannot be empty.");

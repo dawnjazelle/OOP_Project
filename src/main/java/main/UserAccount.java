@@ -1,67 +1,65 @@
 package main;
 
-// UserAccount is the parent class of everyone who signs in to the system.
-// It keeps the login data and has the rules for signing in and for passwords.
-// It is abstract, so we can never create a plain UserAccount.
-// We only create a Student or a Benefactor, because they extend (inherit from) this class.
+// UserAccount is the parent class of everyone who signs in.
+// It keeps the login data and the contact details, and has the rules for signing in and for passwords.
+// It is abstract: only a Student or a Benefactor can be created.
 public abstract class UserAccount {
 
     // ---------- Attributes ----------
-    // They are private, so other classes cannot change them directly.
-    // Other classes must use the methods below.
 
-    private int accountId;        // the unique number of the account
-    private String username;      // the name the user types to sign in
-    private String password;      // the password the user types to sign in (plain text)
+    private int accountId;        // unique number of the account
+    private String username;      // name used to sign in
+    private String password;      // password used to sign in (plain text)
     private String accountType;   // "Student" or "Benefactor"
     private String status;        // "Active" or "Disabled"
-    private String lastLogin;     // date of the latest sign-in, written as yyyy-MM-dd
-    private String createdOn;     // date the office created the account, written as yyyy-MM-dd
+    private String lastLogin;     // date of the latest sign-in, yyyy-MM-dd
+    private String createdOn;     // date the office created the account, yyyy-MM-dd
+    private String email;         // email of the user
+    private String contactNumber; // phone number of the user
 
 
     // ---------- Constructor ----------
 
-    // Purpose: fill in the login data when a new account is created.
-    // It is protected, so only the child classes (Student and Benefactor) can call it.
+    // Purpose: fill in the login data and the contact details of a new account.
+    // Only Student and Benefactor can call it (protected).
     protected UserAccount(int accountId, String username, String tempPassword,
-                          String accountType, String createdOn) {
-        // "this.accountId" is the attribute, "accountId" is the value we received.
+                          String accountType, String createdOn,
+                          String email, String contactNumber) {
         this.accountId = accountId;
         this.username = username;
-        this.password = tempPassword;     // the office gives a temporary password first
+        this.password = tempPassword;     // temporary password from the office
         this.accountType = accountType;
         this.createdOn = createdOn;
+        this.email = email;
+        this.contactNumber = contactNumber;
         this.status = "Active";           // a new account starts as Active
-        this.lastLogin = "";              // empty, because the user has not signed in yet
+        this.lastLogin = "";              // empty until the first sign-in
     }
 
 
     // ---------- Account rules ----------
 
     // Purpose: check the username and password when the user signs in.
-    // Returns true if the sign-in is allowed, and false if it is not.
-    // today is the current date, written as yyyy-MM-dd.
+    // today is the current date, yyyy-MM-dd.
+    // Returns true and saves today as lastLogin if the account is active
+    // and the username and password are correct. Returns false if not.
     public boolean signIn(String username, String password, String today) {
-        // Check each rule and keep the answer (true or false) in a variable.
-        // The variable names say what we are checking.
-        boolean accountIsActive = isActive();                      // a disabled account cannot sign in
-        boolean usernameIsCorrect = this.username.equals(username);  // same as the saved username?
-        boolean passwordIsCorrect = this.password.equals(password);  // same as the saved password?
+        boolean accountIsActive = isActive();
+        boolean usernameIsCorrect = this.username.equals(username);
+        boolean passwordIsCorrect = this.password.equals(password);
 
-        // The sign-in works only when ALL three answers are true.
         if (accountIsActive && usernameIsCorrect && passwordIsCorrect) {
-            lastLogin = today;    // save the date of this sign-in
+            lastLogin = today;
             return true;
         }
         return false;
     }
 
-    // Purpose: let the user replace the temporary password with a new one.
-    // Changing the password is optional.
-    // A password must have at least 4 characters (spaces at the start and end do not count).
-    // Returns true if the new password is accepted, and false if it is too short.
+    // Purpose: replace the password with a new one.
+    // The new password needs at least 4 characters (spaces at the start and end do not count).
+    // Returns true if it is accepted, and false if it is too short.
     public boolean changePassword(String newPassword) {
-        int length = newPassword.trim().length();   // the number of characters
+        int length = newPassword.trim().length();
         boolean longEnough = (length >= 4);
 
         if (longEnough) {
@@ -71,12 +69,11 @@ public abstract class UserAccount {
         return false;
     }
 
-    // Purpose: office action. Give the account a new temporary password
-    // when the user forgot the old one.
-    // The same rule applies: at least 4 characters (spaces at the start and end do not count).
-    // Returns true if the new password is accepted, and false if it is too short.
+    // Purpose: office action. Set a new temporary password on the account.
+    // The new password needs at least 4 characters (spaces at the start and end do not count).
+    // Returns true if it is accepted, and false if it is too short.
     public boolean resetPassword(String tempPassword) {
-        int length = tempPassword.trim().length();   // the number of characters
+        int length = tempPassword.trim().length();
         boolean longEnough = (length >= 4);
 
         if (longEnough) {
@@ -86,13 +83,28 @@ public abstract class UserAccount {
         return false;
     }
 
-    // Purpose: office action. Stop the user from signing in.
-    // All the records of the user stay in the system.
+    // Purpose: change the email and the contact number of the user.
+    // Both values are required.
+    // Returns true if they were changed, and false if one of them is empty (nothing is changed).
+    public boolean updateContact(String newEmail, String newContactNumber) {
+        boolean emailIsEmpty = newEmail.trim().equals("");
+        boolean numberIsEmpty = newContactNumber.trim().equals("");
+        if (emailIsEmpty || numberIsEmpty) {
+            return false;
+        }
+
+        email = newEmail.trim();
+        contactNumber = newContactNumber.trim();
+        return true;
+    }
+
+    // Purpose: office action. Set the status to Disabled, so the user cannot sign in.
+    // The records of the user stay.
     public void disable() {
         status = "Disabled";
     }
 
-    // Purpose: office action. Let the user sign in again.
+    // Purpose: office action. Set the status to Active, so the user can sign in again.
     public void reactivate() {
         status = "Active";
     }
@@ -105,20 +117,19 @@ public abstract class UserAccount {
 
 
     // ---------- Abstract methods ----------
-    // These have no body here. Each child class (Student, Benefactor) must write its own.
-    // This is how each role can give a different answer (polymorphism).
+    // Each child class (Student, Benefactor) writes its own body.
 
-    // Purpose: give the name of the role, for example "Student" or "Benefactor".
+    // Purpose: give the name of the role, "Student" or "Benefactor".
     public abstract String getRole();
 
-    // Purpose: give the menu items that this role can use.
+    // Purpose: give the menu items of this role.
     public abstract String[] getMenuOptions();
 
 
     // ---------- Getters ----------
     // They let other classes read the private attributes.
-    // There is no getPassword, so the password can never be read from outside.
-    // There are no setters, because the attributes change only through the methods above.
+    // There is no getPassword, so the password cannot be read from outside.
+    // The attributes change only through the methods above.
 
     public int getAccountId() {
         return accountId;
@@ -142,5 +153,13 @@ public abstract class UserAccount {
 
     public String getCreatedOn() {
         return createdOn;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public String getContactNumber() {
+        return contactNumber;
     }
 }
